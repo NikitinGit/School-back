@@ -25,8 +25,17 @@ public class OpenApiConfig {
     @EventListener(ApplicationReadyEvent.class)
     public void openBrowserOnStartup() {
         String swaggerUrl = "http://localhost:8080/swagger-ui/index.html";
+        String os = System.getProperty("os.name").toLowerCase();
+        String[] command;
+        if (os.contains("win")) {
+            command = new String[]{"cmd", "/c", "start", swaggerUrl};
+        } else if (os.contains("mac")) {
+            command = new String[]{"open", swaggerUrl};
+        } else {
+            command = new String[]{"xdg-open", swaggerUrl};
+        }
         try {
-            Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", swaggerUrl});
+            Runtime.getRuntime().exec(command);
             System.out.println("Swagger UI opened: " + swaggerUrl);
         } catch (IOException e) {
             System.err.println("Failed to open browser: " + e.getMessage());
