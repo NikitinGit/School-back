@@ -16,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -120,7 +120,9 @@ public class UserService {
         if (userRepository.findByLogin(user.getLogin()).isPresent()) {
             throw new IllegalArgumentException(String.format("User with login %s already exists", user.getLogin()));
         }
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+        //почта необязательна: проверяем занятость только если она указана,
+        //иначе второй пользователь без почты совпал бы с первым таким же
+        if (!StringUtils.isBlank(user.getEmail()) && userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new IllegalArgumentException(String.format("User with email %s already exists", user.getEmail()));
         }
     }
@@ -134,7 +136,10 @@ public class UserService {
             throw new IllegalArgumentException(String.format("User with login %s already exists", updatedUser.getLogin()));
         }
         //если в рамках обновления была изменена почта, то мы проверяем, есть ли в бд уже пользователь с такой почтой
-        if (!existUser.getEmail().equals(updatedUser.getEmail()) && userRepository.findByEmail(updatedUser.getEmail()).isPresent()) {
+        //Objects.equals, а не equals: у существующего пользователя почты может не быть
+        if (!StringUtils.isBlank(updatedUser.getEmail())
+                && !Objects.equals(existUser.getEmail(), updatedUser.getEmail())
+                && userRepository.findByEmail(updatedUser.getEmail()).isPresent()) {
             throw new IllegalArgumentException(String.format("User with email %s already exists", updatedUser.getEmail()));
         }
     }
