@@ -41,6 +41,10 @@ public class Task {
     @Column(name = "reward_exp_slots")
     private Integer rewardExpSlots;
 
+    /** Пояснение к награде для показа, например «первым трём». */
+    @Column(name = "reward_note")
+    private String rewardNote;
+
     @Column(name = "date_from", nullable = false)
     private LocalDate dateFrom;
 

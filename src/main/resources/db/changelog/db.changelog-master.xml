@@ -74,4 +74,8 @@
     <changeSet id="16" author="Nikitin">
         <sqlFile path="db/changelog/sql/create_project_comments_table.sql"/>
     </changeSet>
+    <changeSet id="17" author="Nikitin">
+        <comment>Пояснение к награде, например «первым трём»</comment>
+        <sqlFile path="db/changelog/sql/alter_tasks_add_reward_note.sql"/>
+    </changeSet>
 </databaseChangeLog>
