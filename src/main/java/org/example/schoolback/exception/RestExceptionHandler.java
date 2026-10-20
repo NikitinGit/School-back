@@ -3,11 +3,13 @@ package org.example.schoolback.exception;
 import org.example.schoolback.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -30,6 +32,26 @@ public class RestExceptionHandler {
         return new ErrorResponse(
                 "FORBIDDEN",
                 ACCESS_DENIED_MESSAGE,
+                LocalDateTime.now()
+        );
+    }
+
+    /**
+     * Нарушение проверок полей запроса. Без этого обработчика сообщение попало бы
+     * в общий и ушло бы клиенту служебной строкой на несколько строк,
+     * а оба клиента показывают пользователю содержимое поля message как есть.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(MethodArgumentNotValidException ex) {
+        final String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+
+        return new ErrorResponse(
+                "VALIDATION_ERROR",
+                message,
                 LocalDateTime.now()
         );
     }
