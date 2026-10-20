@@ -1,7 +1,6 @@
 package org.example.schoolback.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.example.schoolback.dto.UserDTO;
 import org.example.schoolback.entity.Role;
 import org.example.schoolback.entity.User;
@@ -27,8 +26,6 @@ public class UserService {
 
     @Autowired
     private EnrollmentHistoryService enrollmentHistoryService;
-
-    private static final EmailValidator EMAIL_VALIDATOR = EmailValidator.getInstance();
 
     /**
      * Сколько опыта нужно на один уровень. Значение условное: в описании
@@ -77,6 +74,10 @@ public class UserService {
         //в запросе не приходят: переносим уже накопленное, иначе правка профиля его обнулила бы
         updatedUser.setExperience(existUser.getExperience());
         updatedUser.setRankLevel(existUser.getRankLevel());
+        //пароль меняется, только если его прислали: иначе остаётся прежний
+        if (updatedUser.getPassword() == null) {
+            updatedUser.setPassword(existUser.getPassword());
+        }
 
         return userRepository.save(updatedUser);
     }
@@ -151,9 +152,11 @@ public class UserService {
         userRepository.save(user.get());
     }
 
+    /**
+     * Поля проверяются аннотациями на объекте запроса, здесь остаётся только то,
+     * для чего нужен поход в базу: не занят ли логин и не занята ли почта.
+     */
     private void validateCreate(User user) {
-        validateCommonFields(user);
-
         if (userRepository.findByLogin(user.getLogin()).isPresent()) {
             throw new IllegalArgumentException(String.format("User with login %s already exists", user.getLogin()));
         }
@@ -166,7 +169,6 @@ public class UserService {
 
     private void validateUpdate(Long userId, User updatedUser) {
         final User existUser = userRepository.findById(userId).get();
-        validateCommonFields(updatedUser);
 
         //если в рамках обновления был изменён логин, то мы проверяем, есть ли в бд уже пользователь с таким логином
         if (!existUser.getLogin().equals(updatedUser.getLogin()) && userRepository.findByLogin(updatedUser.getLogin()).isPresent()) {
@@ -182,33 +184,4 @@ public class UserService {
     }
 
 
-    private void validateCommonFields(User user) {
-        if (StringUtils.isBlank(user.getLogin())) {
-            throw new IllegalArgumentException("Login cannot be empty");
-        }
-        // Регулярное выражение: только латинские буквы (любой регистр) и цифры
-        String regex = "^[a-zA-Z0-9]+$";
-        if (!user.getLogin().matches(regex)) {
-            throw new IllegalArgumentException("Invalid format of login");
-        }
-
-        if (StringUtils.isBlank(user.getPassword()) || user.getPassword().length() < 4) {
-            throw new IllegalArgumentException("Password must be at least 4 characters long");
-        }
-
-        if (!StringUtils.isBlank(user.getEmail()) && !EMAIL_VALIDATOR.isValid(user.getEmail())) {
-            throw new IllegalArgumentException("Invalid email format");
-        }
-
-        if (user.getRole() == null) {
-            throw new IllegalArgumentException("Role cannot be empty");
-        }
-
-        if (StringUtils.isBlank(user.getFirstName())) {
-            throw new IllegalArgumentException("First name cannot be empty");
-        }
-        if (StringUtils.isBlank(user.getSecondName())) {
-            throw new IllegalArgumentException("Second name cannot be empty");
-        }
-    }
 }

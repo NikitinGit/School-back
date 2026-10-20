@@ -1,6 +1,7 @@
 package org.example.schoolback.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.example.schoolback.dto.EnrollmentHistoryDTO;
 import org.example.schoolback.dto.UserDTO;
@@ -51,8 +52,10 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Создать нового пользователя")
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
-        final User createdUser = userService.createUser(userDTO, resource -> userResourceAssembler.createEntity(resource));
+    public ResponseEntity<UserDTO> createUser(@RequestBody @Valid UserDTO userDTO) {
+        final User createdUser = userService.createUser(userDTO,
+                resource -> userResourceAssembler.createEntity(resource)
+        );
         final UserDTO resource = userResourceAssembler.toModel(createdUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(resource);
     }
