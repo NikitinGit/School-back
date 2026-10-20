@@ -30,6 +30,12 @@ public class UserService {
 
     private static final EmailValidator EMAIL_VALIDATOR = EmailValidator.getInstance();
 
+    /**
+     * Сколько опыта нужно на один уровень. Значение условное: в описании
+     * возможности порог не задан, поэтому вынесено в одно место, чтобы менять его здесь.
+     */
+    private static final long EXPERIENCE_PER_RANK = 100L;
+
     @Transactional(readOnly = true)
     public Optional<User> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -59,15 +65,19 @@ public class UserService {
     }
 
     public User updateUser(Long userId, UserDTO userDTO, Updater<User, UserDTO> updater) {
-        if (userRepository.findById(userId).isEmpty()) {
-            throw new IllegalArgumentException(String.format("User not found with id: %d", userId));
-        }
+        final User existUser = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException(String.format("User not found with id: %d", userId)));
 
         final User updatedUser = new User();
         updater.update(updatedUser, userDTO);
         validateUpdate(userId, updatedUser);
 
         updatedUser.setId(userId);
+        //пользователь при правке собирается заново из присланных полей, а опыт и уровень
+        //в запросе не приходят: переносим уже накопленное, иначе правка профиля его обнулила бы
+        updatedUser.setExperience(existUser.getExperience());
+        updatedUser.setRankLevel(existUser.getRankLevel());
+
         return userRepository.save(updatedUser);
     }
 
@@ -100,6 +110,33 @@ public class UserService {
             throw new IllegalArgumentException(String.format("User not found with id: %d", userId));
         }
         userRepository.delete(user.get());
+    }
+
+    /**
+     * Начисление за принятую задачу: монеты и опыт сразу, уровень пересчитывается от опыта.
+     * Запись в историю начислений делает вызывающая служба — она знает причину начисления.
+     *
+     * @return обновлённый пользователь
+     */
+    public User addTaskReward(Long studentId, long coins, long experience) {
+        if (coins < 0 || experience < 0) {
+            throw new IllegalArgumentException("Reward cannot be negative");
+        }
+
+        final User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Student not found with id: %d", studentId)));
+
+        //монеты у давно созданных пользователей могут быть не заданы, поэтому пустое значение считаем нулём
+        student.setCoins((student.getCoins() == null ? 0L : student.getCoins()) + coins);
+        student.setExperience((student.getExperience() == null ? 0L : student.getExperience()) + experience);
+        student.setRankLevel(rankForExperience(student.getExperience()));
+
+        return userRepository.save(student);
+    }
+
+    /** Уровень: единица плюс по одному за каждые EXPERIENCE_PER_RANK опыта. */
+    private static int rankForExperience(long experience) {
+        return (int) (1 + experience / EXPERIENCE_PER_RANK);
     }
 
     public void setCoinsForUser(Long userId, Long coins) {
