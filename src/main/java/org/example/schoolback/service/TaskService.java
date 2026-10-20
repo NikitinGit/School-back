@@ -23,6 +23,8 @@ import org.example.schoolback.util.assembler.impl.TaskAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+//именно из Spring Security, а не одноимённый класс из java.nio.file
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -174,7 +176,7 @@ public class TaskService {
     public TaskAnswerDTO submitAnswer(Long taskId, SubmitAnswerRequest request) {
         final User student = currentUser();
         if (!student.getRole().equals(Role.STUDENT)) {
-            throw new IllegalArgumentException("Only a student can submit an answer");
+            throw new AccessDeniedException("Only a student can submit an answer");
         }
         if (request == null || StringUtils.isBlank(request.answerText())) {
             throw new IllegalArgumentException("Answer cannot be empty");
@@ -326,7 +328,7 @@ public class TaskService {
             final Group group = requireGroup(groupId);
             if (!author.getRole().equals(Role.ADMIN)
                     && (group.getTeacher() == null || !group.getTeacher().getId().equals(author.getId()))) {
-                throw new IllegalArgumentException(
+                throw new AccessDeniedException(
                         String.format("Group with id %d belongs to another teacher", groupId));
             }
             groups.add(group);
@@ -388,13 +390,13 @@ public class TaskService {
         if (task.getTeacher() != null && task.getTeacher().getId().equals(user.getId())) {
             return;
         }
-        throw new IllegalArgumentException(
+        throw new AccessDeniedException(
                 String.format("Task with id %d belongs to another teacher", task.getId()));
     }
 
     private void requireVisibleToStudent(Long taskId, User student) {
         if (!taskRepository.isVisibleToStudent(taskId, student.getId())) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     String.format("Task with id %d is not available to current user", taskId));
         }
     }
@@ -414,14 +416,14 @@ public class TaskService {
         final boolean participant = groupRepository.findAllGroupsByStudentId(user.getId()).stream()
                 .anyMatch(studentGroup -> studentGroup.getId().equals(group.getId()));
         if (!participant) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     String.format("Group with id %d is not available to current user", group.getId()));
         }
     }
 
     private void requireTeacherOrAdmin(User user) {
         if (!user.getRole().equals(Role.TEACHER) && !user.getRole().equals(Role.ADMIN)) {
-            throw new IllegalArgumentException("Only a teacher or an administrator can manage tasks");
+            throw new AccessDeniedException("Only a teacher or an administrator can manage tasks");
         }
     }
 
