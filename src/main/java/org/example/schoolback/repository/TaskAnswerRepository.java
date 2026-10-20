@@ -4,6 +4,7 @@ import org.example.schoolback.entity.AnswerStatus;
 import org.example.schoolback.entity.TaskAnswer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,12 @@ import java.util.Optional;
 @Repository
 public interface TaskAnswerRepository extends JpaRepository<TaskAnswer, Long> {
 
-    /** Все сдачи по задаче — преподавателю на проверку. */
+    /**
+     * Все сдачи по задаче — преподавателю на проверку.
+     * Ученик забирается тем же запросом: в ответе нужно его имя,
+     * иначе на каждую сдачу уходил бы отдельный запрос к базе.
+     */
+    @EntityGraph(attributePaths = {"student", "task"})
     Page<TaskAnswer> findByTaskId(Long taskId, Pageable pageable);
 
     /** Последняя попытка ученика по задаче: именно её состояние показывается на экране. */
