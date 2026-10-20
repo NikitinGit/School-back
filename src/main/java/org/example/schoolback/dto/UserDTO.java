@@ -45,4 +45,11 @@ public class UserDTO {
 
     @JsonProperty(value = "coins")
     private Long coins;
+
+    //только для чтения: опыт и уровень меняются при начислении награды, а не правкой профиля
+    @JsonProperty(value = "exp", access = JsonProperty.Access.READ_ONLY)
+    private Long experience;
+
+    @JsonProperty(value = "rank_level", access = JsonProperty.Access.READ_ONLY)
+    private Integer rankLevel;
 }
