@@ -34,6 +34,28 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             """)
     Page<Task> findAllByStudentId(@Param("studentId") Long studentId, Pageable pageable);
 
+    /** Задачи ученика, срок которых ещё не вышел — вкладка «Активные». */
+    @Query("""
+            SELECT DISTINCT t FROM Task t
+            JOIN t.groups g
+            JOIN g.participants p
+            WHERE p.id = :studentId AND t.dateTo >= :today
+            """)
+    Page<Task> findActiveByStudentId(@Param("studentId") Long studentId,
+                                    @Param("today") LocalDate today,
+                                    Pageable pageable);
+
+    /** Задачи ученика с истёкшим сроком — вкладка «Просроченные». */
+    @Query("""
+            SELECT DISTINCT t FROM Task t
+            JOIN t.groups g
+            JOIN g.participants p
+            WHERE p.id = :studentId AND t.dateTo < :today
+            """)
+    Page<Task> findOverdueByStudentId(@Param("studentId") Long studentId,
+                                      @Param("today") LocalDate today,
+                                      Pageable pageable);
+
     /**
      * Доступна ли задача ученику: состоит ли он хотя бы в одной из групп,
      * которым она выдана. Нужно, чтобы чужую задачу нельзя было открыть по номеру.
