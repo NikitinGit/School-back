@@ -1,6 +1,7 @@
 package org.example.schoolback.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.Hibernate;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -8,7 +9,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "presents")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Present {
@@ -40,5 +42,22 @@ public class Present {
     public void addPhoto(PhotoOfPresent photo) {
         photos.add(photo);
         photo.setPresent(this);
+    }
+
+    /**
+     * Сущности считаются одинаковыми только по идентификатору.
+     * Несохранённые объекты (идентификатора ещё нет) равны лишь сами себе.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        return id != null && id.equals(((Present) o).id);
+    }
+
+    /** Постоянное значение: отпечаток не меняется при изменении полей. */
+    @Override
+    public int hashCode() {
+        return Hibernate.getClass(this).hashCode();
     }
 }

@@ -5,7 +5,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.example.schoolback.dto.GroupDTO;
 import org.example.schoolback.dto.request.CreateGroupRequest;
 import org.example.schoolback.entity.Group;
+import org.example.schoolback.dto.TaskDTO;
+import org.example.schoolback.dto.request.TaskFilter;
 import org.example.schoolback.service.GroupService;
+import org.example.schoolback.service.TaskService;
 import org.example.schoolback.util.assembler.impl.GroupAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +25,15 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/groups")
 public class GroupController {
+
     @Autowired
     private GroupService groupService;
+
     @Autowired
     private GroupAssembler groupAssembler;
+
+    @Autowired
+    private TaskService taskService;
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
@@ -97,6 +105,33 @@ public class GroupController {
         final Group group = groupService.addStudentToGroup(groupId, studentId);
         final GroupDTO resource = groupAssembler.toModel(group);
         return ResponseEntity.ok(resource);
+    }
+
+    @GetMapping("/{groupId}/tasks")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
+    @Operation(summary = "Получить задачи группы",
+            description = """
+                    Задачи, выданные группе.
+                    
+                    **Отбор:** ALL — все, ACTIVE — срок ещё не вышел, OVERDUE — срок прошёл.
+                    
+                    **Влияние роли:**
+                    - ADMIN: задачи любой группы;
+                    - TEACHER: задачи групп, в которых он преподаватель;
+                    - STUDENT: задачи групп, в которых он состоит;
+                    """)
+    public Page<TaskDTO> getGroupTasks(
+            @PathVariable Long groupId,
+            @Parameter(description = "Отбор по сроку") @RequestParam(defaultValue = "ALL") TaskFilter filter,
+            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "dateTo") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        return taskService.getGroupTasks(groupId, filter, pageable);
     }
 
     @DeleteMapping("{groupId}/students/{studentId}")
