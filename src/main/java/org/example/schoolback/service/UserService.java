@@ -50,9 +50,12 @@ public class UserService {
 
 
     public User createUser(UserDTO userDTO, Converter<UserDTO, User> converter) {
-        final User newUser = converter.convert(userDTO);
+        final User newUser = Optional.ofNullable(converter.convert(userDTO))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Не удалось создать пользователя: некорректные данные"
+                ));
+
         validateCreate(newUser);
-        newUser.setCoins(0L);
 
         return userRepository.save(newUser);
     }

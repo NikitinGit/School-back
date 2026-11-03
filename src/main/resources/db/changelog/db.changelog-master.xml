@@ -78,4 +78,9 @@
         <comment>Пояснение к награде, например «первым трём»</comment>
         <sqlFile path="db/changelog/sql/alter_tasks_add_reward_note.sql"/>
     </changeSet>
+
+    <changeSet id="18" author="Codex">
+        <comment>Нулевой баланс коинов для новых и существующих пользователей</comment>
+        <sqlFile path="db/changelog/sql/alter_users_default_balance_coins.sql"/>
+    </changeSet>
 </databaseChangeLog>
