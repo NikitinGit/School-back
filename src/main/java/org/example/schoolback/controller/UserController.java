@@ -7,6 +7,7 @@ import org.example.schoolback.dto.EnrollmentHistoryDTO;
 import org.example.schoolback.dto.UserDTO;
 import org.example.schoolback.dto.response.StudentResponse;
 import org.example.schoolback.dto.response.TeacherResponse;
+import org.example.schoolback.dto.response.UserResponse;
 import org.example.schoolback.entity.*;
 import org.example.schoolback.service.EnrollmentHistoryService;
 import org.example.schoolback.service.UserService;
@@ -40,32 +41,32 @@ public class UserController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Получить информацию о пользователе по его id")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         Optional<User> user = userService.getUserById(id);
         if (user.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        UserDTO resource = userResourceAssembler.toModel(user.get());
+        UserResponse resource = userResourceAssembler.toModel(user.get());
         return ResponseEntity.ok(resource);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Создать нового пользователя")
-    public ResponseEntity<UserDTO> createUser(@RequestBody @Valid UserDTO userDTO) {
+    public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserDTO userDTO) {
         final User createdUser = userService.createUser(userDTO,
                 resource -> userResourceAssembler.createEntity(resource)
         );
-        final UserDTO resource = userResourceAssembler.toModel(createdUser);
+        final UserResponse resource = userResourceAssembler.toModel(createdUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(resource);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Обновить данные пользователя")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         final User updatedUser = userService.updateUser(id, userDTO, (userEntity, resource) -> userResourceAssembler.updateEntity(userEntity, resource));
-        final UserDTO resource = userResourceAssembler.toModel(updatedUser);
+        final UserResponse resource = userResourceAssembler.toModel(updatedUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(resource);
     }
 
@@ -81,19 +82,19 @@ public class UserController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Получить информацию о своём профиле")
-    public ResponseEntity<UserDTO> getCurrentUser() {
+    public ResponseEntity<UserResponse> getCurrentUser() {
         Optional<User> user = userService.getCurrentUser();
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        UserDTO resource = userResourceAssembler.toModel(user.get());
+        UserResponse resource = userResourceAssembler.toModel(user.get());
         return ResponseEntity.ok(resource);
     }
 
     @PutMapping("/{id}/coins")
     @PreAuthorize("hasRole('TEACHER')")
     @Operation(summary = "Начислить коины ученику")
-    public ResponseEntity<UserDTO> addCoins(@PathVariable Long id, @RequestBody Long countCoins) {
+    public ResponseEntity<UserResponse> addCoins(@PathVariable Long id, @RequestBody Long countCoins) {
         try {
             userService.addCoins(id, countCoins);
             return ResponseEntity.ok().build();

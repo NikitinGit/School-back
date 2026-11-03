@@ -75,6 +75,7 @@ public class UserService {
         updatedUser.setId(userId);
         //пользователь при правке собирается заново из присланных полей, а опыт и уровень
         //в запросе не приходят: переносим уже накопленное, иначе правка профиля его обнулила бы
+        updatedUser.setCoins(existUser.getCoins());
         updatedUser.setExperience(existUser.getExperience());
         updatedUser.setRankLevel(existUser.getRankLevel());
         //пароль меняется, только если его прислали: иначе остаётся прежний
