@@ -86,27 +86,20 @@ public class UserService {
         return userRepository.save(updatedUser);
     }
 
-    public void addCoins(Long userId, Long countCoins) {
-        Optional<User> student = userRepository.findById(userId);
-        if (student.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Student not found with id: %d", userId));
+    public void addCoins(Long studentId, Long amount, String description) {
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
         }
 
-        Optional<User> teacher = getCurrentUser();
+        final User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("Student not found with id: %d", studentId)));
+        final User teacher = getCurrentUser()
+                .orElseThrow(() -> new IllegalArgumentException("Current teacher not found"));
 
-        if (teacher.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Teacher not found with id: %d", userId));
-        }
-
-        User existStudent = student.get();
-        User existTeacher = teacher.get();
-
-
-        Long currentCoins = existStudent.getCoins();
-        existStudent.setCoins(currentCoins + countCoins);
-
-        userRepository.save(existStudent);
-        enrollmentHistoryService.saveEnrollmentHistory(existTeacher, existStudent, countCoins);
+        student.setCoins((student.getCoins() == null ? 0L : student.getCoins()) + amount);
+        userRepository.save(student);
+        enrollmentHistoryService.saveEnrollmentHistory(teacher, student, amount, 0L, description);
     }
 
     public void deleteUser(Long userId) {

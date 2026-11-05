@@ -2,16 +2,12 @@ package org.example.schoolback.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import io.swagger.v3.oas.annotations.Parameter;
-import org.example.schoolback.dto.EnrollmentHistoryDTO;
 import org.example.schoolback.dto.UserDTO;
 import org.example.schoolback.dto.response.StudentResponse;
 import org.example.schoolback.dto.response.TeacherResponse;
 import org.example.schoolback.dto.response.UserResponse;
 import org.example.schoolback.entity.*;
-import org.example.schoolback.service.EnrollmentHistoryService;
 import org.example.schoolback.service.UserService;
-import org.example.schoolback.util.assembler.impl.EnrollmentHistoryAssembler;
 import org.example.schoolback.util.assembler.impl.UserResourceAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,10 +29,6 @@ public class UserController {
     private UserService userService;
     @Autowired
     private UserResourceAssembler userResourceAssembler;
-    @Autowired
-    private EnrollmentHistoryAssembler enrollmentHistoryAssembler;
-    @Autowired
-    private EnrollmentHistoryService enrollmentHistoryService;
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -89,56 +81,6 @@ public class UserController {
         }
         UserResponse resource = userResourceAssembler.toModel(user.get());
         return ResponseEntity.ok(resource);
-    }
-
-    @PutMapping("/{id}/coins")
-    @PreAuthorize("hasRole('TEACHER')")
-    @Operation(summary = "Начислить коины ученику")
-    public ResponseEntity<UserResponse> addCoins(@PathVariable Long id, @RequestBody Long countCoins) {
-        try {
-            userService.addCoins(id, countCoins);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @GetMapping("/{id}/coinsHistory")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
-    @Operation(summary = "Получить информацию о истории начисления коинов для пользователя по его id")
-    public Page<EnrollmentHistoryDTO> getCoinsHistoryById(
-            @PathVariable Long id,
-            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "enrollmentDate") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sort = Sort.by(direction, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        User user = userService.getUserById(id).orElseThrow(() -> new IllegalArgumentException("User with id " + id + " not found"));
-
-        Page<EnrollmentHistory> enrollmentHistory = enrollmentHistoryService.getEnrollmentHistoryByUser(user, pageable);
-        return enrollmentHistory.map(entity->enrollmentHistoryAssembler.toDto(entity));
-    }
-
-    @GetMapping("allCoinsHistory")
-    @PreAuthorize("hasAnyRole('TEACHER')")
-    @Operation(summary = "Получить информацию о истории начисления всех коинов начисленных преподавателем")
-    public Page<EnrollmentHistoryDTO> getAllCoinsHistory(
-            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "enrollmentDate") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sort = Sort.by(direction, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        User currentTeacher = userService.getCurrentUser().get();
-
-        Page<EnrollmentHistory> enrollmentHistory = enrollmentHistoryService.getEnrollmentHistoryByTeacherSortedByDateDesc(currentTeacher, pageable);
-        return enrollmentHistory.map(entity->enrollmentHistoryAssembler.toDto(entity));
     }
 
     @GetMapping("/students")
