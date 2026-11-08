@@ -76,7 +76,7 @@ public class RestExceptionHandler {
     public ErrorResponse handleMalformedRequest(Exception ex) {
         return new ErrorResponse(
                 "VALIDATION_ERROR",
-                "Некорректные параметры запроса",
+                "Некорректные данные запроса",
                 LocalDateTime.now()
         );
     }

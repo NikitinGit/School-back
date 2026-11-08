@@ -155,12 +155,12 @@ public class UserService {
      */
     private void validateCreate(User user) {
         if (userRepository.findByLogin(user.getLogin()).isPresent()) {
-            throw new IllegalArgumentException(String.format("User with login %s already exists", user.getLogin()));
+            throw new IllegalArgumentException(String.format("Пользователь с таким логином %s already exists", user.getLogin()));
         }
         //почта необязательна: проверяем занятость только если она указана,
         //иначе второй пользователь без почты совпал бы с первым таким же
         if (!StringUtils.isBlank(user.getEmail()) && userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalArgumentException(String.format("User with email %s already exists", user.getEmail()));
+            throw new IllegalArgumentException(String.format("Пользователь с таким email %s already exists", user.getEmail()));
         }
     }
 
