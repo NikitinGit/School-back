@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -53,6 +54,8 @@ public class UserDTO {
     @JsonProperty("email")
     private String email;
 
+    @NotNull(message = "Дата рождения обязательна")
+    @PastOrPresent(message = "Дата рождения не может быть в будущем")
     @JsonProperty("date_of_birth")
     private LocalDate birthDate;
 
