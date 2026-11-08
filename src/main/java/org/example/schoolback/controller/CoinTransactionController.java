@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/coin-transactions")
 public class CoinTransactionController {
 
     private final UserService userService;
@@ -35,7 +36,7 @@ public class CoinTransactionController {
         this.enrollmentHistoryAssembler = enrollmentHistoryAssembler;
     }
 
-    @PostMapping("/api/coin-transactions")
+    @PostMapping
     @PreAuthorize("hasRole('TEACHER')")
     @Operation(summary = "Начислить коины ученику")
     public ResponseEntity<Void> createCoinTransaction(
@@ -45,7 +46,7 @@ public class CoinTransactionController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/api/coin-transactions/{studentId}")
+    @GetMapping("/{studentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
     @Operation(summary = "Получить информацию о истории начисления коинов для пользователя по его id")
     public Page<EnrollmentHistoryDTO> getCoinsHistoryById(
@@ -67,7 +68,7 @@ public class CoinTransactionController {
                 .map(enrollmentHistoryAssembler::toDto);
     }
 
-    @GetMapping("/api/coin-transactions/issued")
+    @GetMapping("/issued")
     @PreAuthorize("hasAnyRole('TEACHER')")
     @Operation(summary = "Получить историю всех начислений коинов текущим преподавателем")
     public Page<EnrollmentHistoryDTO> getAllCoinsHistory(
