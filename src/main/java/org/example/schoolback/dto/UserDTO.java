@@ -25,7 +25,11 @@ public class UserDTO {
     private String login;
 
     @NotBlank(message = "Пароль не может быть пустым")
-    @Size(min = 4, message = "Пароль должен быть не короче четырёх знаков")
+    @Size(min = 8, message = "Пароль должен быть не короче восьми символов")
+    @Pattern(
+            regexp = ".*[()*!@#].*",
+            message = "Пароль должен содержать хотя бы один спецсимвол: ( ) * ! @ #"
+    )
     @JsonProperty(value = "password", access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
