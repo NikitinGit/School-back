@@ -37,7 +37,7 @@ public class CoinTransactionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Начислить коины ученику")
     public ResponseEntity<Void> createCoinTransaction(
             @RequestBody @Valid CreateCoinTransactionRequest request
@@ -69,7 +69,7 @@ public class CoinTransactionController {
     }
 
     @GetMapping("/issued")
-    @PreAuthorize("hasAnyRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Получить историю всех начислений коинов текущим преподавателем")
     public Page<EnrollmentHistoryDTO> getAllCoinsHistory(
             @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
