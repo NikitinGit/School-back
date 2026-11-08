@@ -48,8 +48,7 @@ public class UserDTO {
     @JsonProperty("middle_name")
     private String patronymicName;
 
-    //почта необязательна: пустое значение проверку проходит,
-    //а непустое должно выглядеть как почтовый адрес
+    @NotBlank(message = "Электронная почта обязательна")
     @Email(message = "Неверный вид почтового адреса")
     @JsonProperty("email")
     private String email;
