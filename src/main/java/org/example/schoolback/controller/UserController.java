@@ -2,6 +2,7 @@ package org.example.schoolback.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.example.schoolback.dto.UserDTO;
 import org.example.schoolback.dto.response.StudentResponse;
 import org.example.schoolback.dto.response.TeacherResponse;
@@ -33,7 +34,7 @@ public class UserController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Получить информацию о пользователе по его id")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable @Positive Long id) {
         Optional<User> user = userService.getUserById(id);
         if (user.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

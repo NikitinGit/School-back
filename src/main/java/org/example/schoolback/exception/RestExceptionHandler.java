@@ -2,11 +2,14 @@ package org.example.schoolback.exception;
 
 import org.example.schoolback.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -56,12 +59,45 @@ public class RestExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
+    /** Некорректные параметры пути и query-параметры, например id <= 0. */
+    @ExceptionHandler(HandlerMethodValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleCustomException(Exception ex) {
+    public ErrorResponse handleMethodValidation(HandlerMethodValidationException ex) {
+        return new ErrorResponse(
+                "VALIDATION_ERROR",
+                "Некорректные параметры запроса",
+                LocalDateTime.now()
+        );
+    }
+
+    /** Нечисловой id, некорректный JSON и другие ошибки разбора входных данных. */
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMalformedRequest(Exception ex) {
+        return new ErrorResponse(
+                "VALIDATION_ERROR",
+                "Некорректные параметры запроса",
+                LocalDateTime.now()
+        );
+    }
+
+    /** Ошибки бизнес-валидации, которые службы используют для некорректных входных данных. */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
         return new ErrorResponse(
                 "ERROR",
                 ex.getMessage(),
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleUnexpectedException(Exception ex) {
+        return new ErrorResponse(
+                "INTERNAL_ERROR",
+                "Внутренняя ошибка сервера",
                 LocalDateTime.now()
         );
     }
