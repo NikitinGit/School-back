@@ -121,6 +121,7 @@ public class UserController {
         response.setId(student.getId());
         response.setFullName(student.getFullName());
         response.setLogin(student.getLogin());
+        response.setBirthDate(student.getBirthDate());
         response.setCoins(String.valueOf(student.getCoins()));
         return response;
     }
