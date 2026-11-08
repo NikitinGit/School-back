@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: school-db
     environment:
       POSTGRES_DB: ${DB_NAME:-school}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
@@ -20,8 +19,6 @@ services:
   app:
     build:
       context: .
-      network: host
-    container_name: school-back
     environment:
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-school}
       DB_USERNAME: ${DB_USERNAME:-postgres}
