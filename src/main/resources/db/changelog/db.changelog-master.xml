@@ -83,4 +83,8 @@
         <comment>Нулевой баланс коинов для новых и существующих пользователей</comment>
         <sqlFile path="db/changelog/sql/alter_users_default_balance_coins.sql"/>
     </changeSet>
+    <changeSet id="19" author="Codex">
+        <comment>Тестовые пользователи STUDENT и TEACHER</comment>
+        <sqlFile path="db/changelog/sql/insert_test_student_and_teacher.sql"/>
+    </changeSet>
 </databaseChangeLog>
