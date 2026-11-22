@@ -2,21 +2,102 @@ package org.example.schoolback.exception;
 
 import org.example.schoolback.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
+    private static final String ACCESS_DENIED_MESSAGE = "У вас нет прав на это действие";
+
+    /**
+     * Отказ в правах: и проверка роли через {@code @PreAuthorize}, и проверки владения
+     * внутри служб. Отдаём 403, чтобы клиент отличал «тебе сюда нельзя» от «неверные данные».
+     *
+     * <p>Подробности наружу не выносим намеренно: по разным сообщениям посторонний мог бы
+     * выяснить, существует ли чужая задача или проект с таким номером.
+     *
+     * <p>Внимание: это {@code org.springframework.security.access.AccessDeniedException},
+     * а не одноимённый класс из {@code java.nio.file}.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleAccessDenied(AccessDeniedException ex) {
+        return new ErrorResponse(
+                "FORBIDDEN",
+                ACCESS_DENIED_MESSAGE,
+                LocalDateTime.now()
+        );
+    }
+
+    /**
+     * Нарушение проверок полей запроса. Без этого обработчика сообщение попало бы
+     * в общий и ушло бы клиенту служебной строкой на несколько строк,
+     * а оба клиента показывают пользователю содержимое поля message как есть.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleCustomException(Exception ex) {
+    public ErrorResponse handleValidation(MethodArgumentNotValidException ex) {
+        final String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+
+        return new ErrorResponse(
+                "VALIDATION_ERROR",
+                message,
+                LocalDateTime.now()
+        );
+    }
+
+    /** Некорректные параметры пути и query-параметры, например id <= 0. */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodValidation(HandlerMethodValidationException ex) {
+        return new ErrorResponse(
+                "VALIDATION_ERROR",
+                "Некорректные параметры запроса",
+                LocalDateTime.now()
+        );
+    }
+
+    /** Нечисловой id, некорректный JSON и другие ошибки разбора входных данных. */
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMalformedRequest(Exception ex) {
+        return new ErrorResponse(
+                "VALIDATION_ERROR",
+                "Некорректные данные запроса",
+                LocalDateTime.now()
+        );
+    }
+
+    /** Ошибки бизнес-валидации, которые службы используют для некорректных входных данных. */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
         return new ErrorResponse(
                 "ERROR",
                 ex.getMessage(),
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleUnexpectedException(Exception ex) {
+        return new ErrorResponse(
+                "INTERNAL_ERROR",
+                "Внутренняя ошибка сервера",
                 LocalDateTime.now()
         );
     }

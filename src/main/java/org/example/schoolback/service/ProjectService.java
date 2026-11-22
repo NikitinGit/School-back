@@ -24,6 +24,8 @@ import org.example.schoolback.util.assembler.impl.ProjectCommentAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+//именно из Spring Security, а не одноимённый класс из java.nio.file
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -226,7 +228,7 @@ public class ProjectService {
                 || comment.getAuthor().getId().equals(user.getId())
                 || project.getAuthor().getId().equals(user.getId());
         if (!allowed) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     String.format("Comment with id %d was written by another user", commentId));
         }
 
@@ -294,7 +296,7 @@ public class ProjectService {
         if (project.getAuthor().getId().equals(user.getId())) {
             return;
         }
-        throw new IllegalArgumentException(
+        throw new AccessDeniedException(
                 String.format("Project with id %d belongs to another user", project.getId()));
     }
 
@@ -303,7 +305,7 @@ public class ProjectService {
             return;
         }
         if (!projectRepository.isVisibleTo(project.getId(), viewer.getId())) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     String.format("Project with id %d is not available to current user", project.getId()));
         }
     }
@@ -322,7 +324,7 @@ public class ProjectService {
         final boolean participant = groupRepository.findAllGroupsByStudentId(user.getId()).stream()
                 .anyMatch(studentGroup -> studentGroup.getId().equals(group.getId()));
         if (!participant) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     String.format("Group with id %d is not available to current user", group.getId()));
         }
     }

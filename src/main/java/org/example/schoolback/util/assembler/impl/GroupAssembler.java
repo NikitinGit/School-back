@@ -35,9 +35,7 @@ public class GroupAssembler  extends ConverterModelAssembler<Group, GroupDTO> {
 
         Group group = new Group();
         group.setName(groupDTO.getGroupName());
-        if (teacher.isPresent()) {
-            group.setTeacher(teacher.get());
-        }
+        teacher.ifPresent(group::setTeacher);
         return group;
     }
 

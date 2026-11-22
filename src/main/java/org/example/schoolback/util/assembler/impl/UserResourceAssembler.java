@@ -2,20 +2,22 @@ package org.example.schoolback.util.assembler.impl;
 
 import org.example.schoolback.entity.User;
 import org.example.schoolback.dto.UserDTO;
-import org.example.schoolback.util.assembler.ConverterModelAssembler;
+import org.example.schoolback.dto.response.UserResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.List;
+
 @Component
-public class UserResourceAssembler extends ConverterModelAssembler<User, UserDTO> {
+public class UserResourceAssembler {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Override
-    public UserDTO toModel(User user) {
-        UserDTO resource = new UserDTO();
+    public UserResponse toModel(User user) {
+        UserResponse resource = new UserResponse();
         resource.setId(user.getId());
         resource.setLogin(user.getLogin());
         resource.setRole(user.getRole());
@@ -31,23 +33,26 @@ public class UserResourceAssembler extends ConverterModelAssembler<User, UserDTO
         return resource;
     }
 
-    @Override
     public User createEntity(UserDTO resource) {
         User user = new User();
         updateEntity(user, resource);
         return user;
     }
 
-    @Override
     public void updateEntity(User existEntity, UserDTO resource) {
         existEntity.setLogin(resource.getLogin());
-        existEntity.setPassword(passwordEncoder.encode(resource.getPassword()));
+        if (resource.getPassword() != null) {
+            existEntity.setPassword(passwordEncoder.encode(resource.getPassword()));
+        }
         existEntity.setRole(resource.getRole());
         existEntity.setEmail(resource.getEmail());
         existEntity.setFirstName(resource.getFirstName());
         existEntity.setSecondName(resource.getSecondName());
         existEntity.setPatronymicName(resource.getPatronymicName());
         existEntity.setBirthDate(resource.getBirthDate());
-        existEntity.setCoins(resource.getCoins());
+    }
+
+    public List<UserResponse> toModels(Collection<User> users) {
+        return users.stream().map(this::toModel).toList();
     }
 }

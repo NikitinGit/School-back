@@ -1,7 +1,6 @@
 package org.example.schoolback.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.example.schoolback.dto.UserDTO;
 import org.example.schoolback.entity.Role;
 import org.example.schoolback.entity.User;
@@ -28,8 +27,6 @@ public class UserService {
     @Autowired
     private EnrollmentHistoryService enrollmentHistoryService;
 
-    private static final EmailValidator EMAIL_VALIDATOR = EmailValidator.getInstance();
-
     /**
      * Сколько опыта нужно на один уровень. Значение условное: в описании
      * возможности порог не задан, поэтому вынесено в одно место, чтобы менять его здесь.
@@ -53,9 +50,12 @@ public class UserService {
 
 
     public User createUser(UserDTO userDTO, Converter<UserDTO, User> converter) {
-        final User newUser = converter.convert(userDTO);
+        final User newUser = Optional.ofNullable(converter.convert(userDTO))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Не удалось создать пользователя: некорректные данные"
+                ));
+
         validateCreate(newUser);
-        newUser.setCoins(0L);
 
         return userRepository.save(newUser);
     }
@@ -75,33 +75,31 @@ public class UserService {
         updatedUser.setId(userId);
         //пользователь при правке собирается заново из присланных полей, а опыт и уровень
         //в запросе не приходят: переносим уже накопленное, иначе правка профиля его обнулила бы
+        updatedUser.setCoins(existUser.getCoins());
         updatedUser.setExperience(existUser.getExperience());
         updatedUser.setRankLevel(existUser.getRankLevel());
+        //пароль меняется, только если его прислали: иначе остаётся прежний
+        if (updatedUser.getPassword() == null) {
+            updatedUser.setPassword(existUser.getPassword());
+        }
 
         return userRepository.save(updatedUser);
     }
 
-    public void addCoins(Long userId, Long countCoins) {
-        Optional<User> student = userRepository.findById(userId);
-        if (student.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Student not found with id: %d", userId));
+    public void addCoins(Long studentId, Long amount, String description) {
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
         }
 
-        Optional<User> teacher = getCurrentUser();
+        final User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("Student not found with id: %d", studentId)));
+        final User teacher = getCurrentUser()
+                .orElseThrow(() -> new IllegalArgumentException("Current teacher not found"));
 
-        if (teacher.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Teacher not found with id: %d", userId));
-        }
-
-        User existStudent = student.get();
-        User existTeacher = teacher.get();
-
-
-        Long currentCoins = existStudent.getCoins();
-        existStudent.setCoins(currentCoins + countCoins);
-
-        userRepository.save(existStudent);
-        enrollmentHistoryService.saveEnrollmentHistory(existTeacher, existStudent, countCoins);
+        student.setCoins((student.getCoins() == null ? 0L : student.getCoins()) + amount);
+        userRepository.save(student);
+        enrollmentHistoryService.saveEnrollmentHistory(teacher, student, amount, 0L, description);
     }
 
     public void deleteUser(Long userId) {
@@ -151,22 +149,23 @@ public class UserService {
         userRepository.save(user.get());
     }
 
+    /**
+     * Поля проверяются аннотациями на объекте запроса, здесь остаётся только то,
+     * для чего нужен поход в базу: не занят ли логин и не занята ли почта.
+     */
     private void validateCreate(User user) {
-        validateCommonFields(user);
-
         if (userRepository.findByLogin(user.getLogin()).isPresent()) {
-            throw new IllegalArgumentException(String.format("User with login %s already exists", user.getLogin()));
+            throw new IllegalArgumentException(String.format("Пользователь с таким логином %s already exists", user.getLogin()));
         }
         //почта необязательна: проверяем занятость только если она указана,
         //иначе второй пользователь без почты совпал бы с первым таким же
         if (!StringUtils.isBlank(user.getEmail()) && userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalArgumentException(String.format("User with email %s already exists", user.getEmail()));
+            throw new IllegalArgumentException(String.format("Пользователь с таким email %s already exists", user.getEmail()));
         }
     }
 
     private void validateUpdate(Long userId, User updatedUser) {
         final User existUser = userRepository.findById(userId).get();
-        validateCommonFields(updatedUser);
 
         //если в рамках обновления был изменён логин, то мы проверяем, есть ли в бд уже пользователь с таким логином
         if (!existUser.getLogin().equals(updatedUser.getLogin()) && userRepository.findByLogin(updatedUser.getLogin()).isPresent()) {
@@ -182,33 +181,4 @@ public class UserService {
     }
 
 
-    private void validateCommonFields(User user) {
-        if (StringUtils.isBlank(user.getLogin())) {
-            throw new IllegalArgumentException("Login cannot be empty");
-        }
-        // Регулярное выражение: только латинские буквы (любой регистр) и цифры
-        String regex = "^[a-zA-Z0-9]+$";
-        if (!user.getLogin().matches(regex)) {
-            throw new IllegalArgumentException("Invalid format of login");
-        }
-
-        if (StringUtils.isBlank(user.getPassword()) || user.getPassword().length() < 4) {
-            throw new IllegalArgumentException("Password must be at least 4 characters long");
-        }
-
-        if (!StringUtils.isBlank(user.getEmail()) && !EMAIL_VALIDATOR.isValid(user.getEmail())) {
-            throw new IllegalArgumentException("Invalid email format");
-        }
-
-        if (user.getRole() == null) {
-            throw new IllegalArgumentException("Role cannot be empty");
-        }
-
-        if (StringUtils.isBlank(user.getFirstName())) {
-            throw new IllegalArgumentException("First name cannot be empty");
-        }
-        if (StringUtils.isBlank(user.getSecondName())) {
-            throw new IllegalArgumentException("Second name cannot be empty");
-        }
-    }
 }

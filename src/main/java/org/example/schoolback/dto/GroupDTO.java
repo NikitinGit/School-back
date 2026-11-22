@@ -1,8 +1,8 @@
 package org.example.schoolback.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.example.schoolback.dto.response.UserResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,9 +24,9 @@ public class GroupDTO {
     private Long teacherId;
 
     @JsonProperty(value = "teacher", access = JsonProperty.Access.READ_ONLY)
-    private UserDTO teacher;
+    private UserResponse teacher;
 
     @JsonProperty(value = "students", access = JsonProperty.Access.READ_ONLY)
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private List<UserDTO> students;
+    private List<UserResponse> students;
 }

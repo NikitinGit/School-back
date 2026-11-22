@@ -46,8 +46,8 @@ public class User {
 	@Column(name = "birth_date")
 	private LocalDate birthDate;
 
-	@Column(name = "balance_coins")
-	private Long coins;
+	@Column(name = "balance_coins", nullable = false)
+	private Long coins = 0L;
 
 	@Column(name = "balance_exp", nullable = false)
 	private Long experience = 0L;
