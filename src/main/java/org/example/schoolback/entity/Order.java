@@ -1,15 +1,18 @@
 package org.example.schoolback.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.Hibernate;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
@@ -31,4 +34,21 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false)
     private OrderStatus status;
+
+    /**
+     * Сущности считаются одинаковыми только по идентификатору.
+     * Несохранённые объекты (идентификатора ещё нет) равны лишь сами себе.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        return id != null && id.equals(((Order) o).id);
+    }
+
+    /** Постоянное значение: отпечаток не меняется при изменении полей. */
+    @Override
+    public int hashCode() {
+        return Hibernate.getClass(this).hashCode();
+    }
 }

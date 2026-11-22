@@ -17,10 +17,21 @@ public class EnrollmentHistoryService {
     private EnrollmentHistoryRepository enrollmentHistoryRepository;
 
     public void saveEnrollmentHistory(User teacher, User student, Long coins) {
+        saveEnrollmentHistory(teacher, student, coins, 0L, null);
+    }
+
+    /**
+     * Запись о начислении с опытом и причиной: так выглядит начисление за принятую задачу.
+     *
+     * @param description за что начислено, например название задачи
+     */
+    public void saveEnrollmentHistory(User teacher, User student, Long coins, Long experience, String description) {
         EnrollmentHistory history = new EnrollmentHistory();
         history.setTeacher(teacher);
         history.setUser(student);
         history.setEnrolledCoins(coins);
+        history.setEnrolledExp(experience == null ? 0L : experience);
+        history.setDescription(description);
         history.setEnrollmentDate(LocalDateTime.now());
 
         enrollmentHistoryRepository.save(history);

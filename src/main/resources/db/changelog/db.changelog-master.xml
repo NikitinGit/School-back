@@ -41,4 +41,41 @@
     <changeSet id="8" author="Artyom Sokolov">
         <sqlFile path="db/changelog/sql/create_orders_table.sql"/>
     </changeSet>
+    <changeSet id="9" author="Nikitin">
+        <comment>Опыт (EXP) и ранг пользователя</comment>
+        <sqlFile path="db/changelog/sql/alter_users_add_experience.sql"/>
+    </changeSet>
+
+    <changeSet id="10" author="Nikitin">
+        <comment>Описание начисления и начисленный опыт в истории</comment>
+        <sqlFile path="db/changelog/sql/alter_enrollment_history_add_description.sql"/>
+    </changeSet>
+
+    <changeSet id="11" author="Nikitin">
+        <sqlFile path="db/changelog/sql/create_tasks_table.sql"/>
+    </changeSet>
+
+    <changeSet id="12" author="Nikitin">
+        <sqlFile path="db/changelog/sql/create_task_groups_table.sql"/>
+    </changeSet>
+
+    <changeSet id="13" author="Nikitin">
+        <sqlFile path="db/changelog/sql/create_task_answers_table.sql"/>
+    </changeSet>
+
+    <changeSet id="14" author="Nikitin">
+        <sqlFile path="db/changelog/sql/create_projects_table.sql"/>
+    </changeSet>
+
+    <changeSet id="15" author="Nikitin">
+        <sqlFile path="db/changelog/sql/create_project_likes_table.sql"/>
+    </changeSet>
+
+    <changeSet id="16" author="Nikitin">
+        <sqlFile path="db/changelog/sql/create_project_comments_table.sql"/>
+    </changeSet>
+    <changeSet id="17" author="Nikitin">
+        <comment>Пояснение к награде, например «первым трём»</comment>
+        <sqlFile path="db/changelog/sql/alter_tasks_add_reward_note.sql"/>
+    </changeSet>
 </databaseChangeLog>

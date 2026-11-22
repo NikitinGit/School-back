@@ -26,6 +26,8 @@ public class UserResourceAssembler extends ConverterModelAssembler<User, UserDTO
         resource.setEmail(user.getEmail());
         resource.setBirthDate(user.getBirthDate());
         resource.setCoins(user.getCoins());
+        resource.setExperience(user.getExperience());
+        resource.setRankLevel(user.getRankLevel());
         return resource;
     }
 
